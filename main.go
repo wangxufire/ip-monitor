@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/user"
 	"strings"
 	"time"
 )
@@ -21,11 +22,11 @@ func init() {
 	bark := flag.String("n", "2qT6qyWRNfAYYZx8sBsje7", "-bark ${bark_device_code}")
 	flag.Parse()
 	barkCode = *bark
-	home, err := os.UserHomeDir()
+	current, err := user.Current()
 	if err != nil {
 		panic(err)
 	}
-	homeDir = home
+	homeDir = current.HomeDir
 }
 
 func main() {

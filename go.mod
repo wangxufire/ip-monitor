@@ -1,3 +1,3 @@
 module github.com/wangxufire/ip-monitor
 
-go 1.15
+go 1.11
