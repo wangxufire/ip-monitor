@@ -14,8 +14,8 @@ import (
 )
 
 var (
+	ipFile   string
 	barkCode string
-	homeDir  string
 )
 
 func init() {
@@ -26,7 +26,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	homeDir = current.HomeDir
+	ipFile = current.HomeDir + string(os.PathSeparator) + ".current-ip"
 }
 
 func main() {
@@ -38,18 +38,13 @@ func main() {
 			continue
 		}
 		log(fmt.Sprintf("fetch ip success %s\n", ip))
-		ipFile := homeDir + string(os.PathSeparator) + ".current-ip"
 		_, err = os.Stat(ipFile)
 		if os.IsNotExist(err) {
-			f, err := os.Create(ipFile)
+			err = createIPFile(ipFile, ip)
 			if err != nil {
 				log(err)
-				sleep()
-				continue
 			}
-			defer f.Close()
-			f.WriteString(ip)
-			f.Sync()
+			sleep()
 			continue
 		}
 		if err != nil {
@@ -57,30 +52,9 @@ func main() {
 			sleep()
 			continue
 		}
-		f, err := os.OpenFile(ipFile, os.O_APPEND, os.ModePerm)
+		err = compareAndRecordNewIP(ipFile, ip)
 		if err != nil {
 			log(err)
-			sleep()
-			continue
-		}
-		defer f.Close()
-		buf, err := ioutil.ReadFile(f.Name())
-		if err != nil {
-			log(err)
-			sleep()
-			continue
-		}
-		oldIP := string(buf)
-		if strings.Compare(ip, oldIP) != 0 {
-			err = notify(ip)
-			if err != nil {
-				log(err)
-				sleep()
-				continue
-			}
-			f.Truncate(int64(len(buf)))
-			f.WriteString(ip)
-			f.Sync()
 		}
 		sleep()
 	}
@@ -93,6 +67,39 @@ func sleep() {
 func log(msg interface{}) {
 	date := time.Now().Format("2006-01-02 15:04:05")
 	fmt.Printf("%s %+v \n", date, msg)
+}
+
+func createIPFile(ipFile, ip string) error {
+	f, err := os.Create(ipFile)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	f.WriteString(ip)
+	f.Sync()
+	return nil
+}
+
+func compareAndRecordNewIP(ipFile, ip string) error {
+	f, err := os.OpenFile(ipFile, os.O_APPEND, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	buf, err := ioutil.ReadFile(f.Name())
+	if err != nil {
+		return err
+	}
+	oldIP := string(buf)
+	if strings.Compare(ip, oldIP) != 0 {
+		if err = notify(ip); err != nil {
+			return err
+		}
+		f.Truncate(int64(len(buf)))
+		f.WriteString(ip)
+		f.Sync()
+	}
+	return nil
 }
 
 func notify(ip string) error {
