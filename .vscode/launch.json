@@ -12,7 +12,9 @@
       "program": "${workspaceFolder}/main.go",
       "args": [
         "bark",
-        "2qT6qyWsNAfnYZx8mBsje5"
+        "2qT6qyWsNAfnYZx8mBsje5",
+        "period",
+        "5"
       ]
     }
   ]

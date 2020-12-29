@@ -14,13 +14,16 @@ import (
 )
 
 var (
-	ipFile   string
-	barkCode string
+	ipFile      string
+	sleepPeriod uint
+	barkCode    string
 )
 
 func init() {
-	bark := flag.String("n", "2qT6qyWRNfAYYZx8sBsje7", "bark=${bark_device_code}")
+	bark := flag.String("bark", "2qT6qyWRNfAYYZx8sBsje7", "bark=${bark_device_code}")
+	period := flag.Uint("period", 600, "period=600 unit is second")
 	flag.Parse()
+	sleepPeriod = *period
 	barkCode = *bark
 	current, err := user.Current()
 	if err != nil {
@@ -61,12 +64,12 @@ func main() {
 }
 
 func sleep() {
-	time.Sleep(10 * time.Minute)
+	time.Sleep(time.Duration(sleepPeriod) * time.Second)
 }
 
 func log(msg interface{}) {
 	date := time.Now().Format("2006-01-02 15:04:05")
-	fmt.Printf("%s %+v \n", date, msg)
+	fmt.Printf("%s %+v", date, msg)
 }
 
 func createIPFile(ipFile, ip string) error {
