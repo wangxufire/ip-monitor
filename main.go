@@ -19,7 +19,7 @@ var (
 )
 
 func init() {
-	bark := flag.String("n", "2qT6qyWRNfAYYZx8sBsje7", "-bark ${bark_device_code}")
+	bark := flag.String("n", "2qT6qyWRNfAYYZx8sBsje7", "bark=${bark_device_code}")
 	flag.Parse()
 	barkCode = *bark
 	current, err := user.Current()
