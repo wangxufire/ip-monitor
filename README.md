@@ -1,5 +1,6 @@
 # ip-monitor
 
+### Install
 ```
 go install github.com/wangxufire/ip-monitor@latest
 ```
@@ -13,4 +14,7 @@ GO111MODULE=off go get github.com/wangxufire/ip-monitor
 GO111MODULE=off go install github.com/wangxufire/ip-monitor
 ```
 
+### Run
+```shell
 ip-monitor bark=${bark_device_code}
+```
