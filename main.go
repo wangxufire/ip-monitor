@@ -37,7 +37,7 @@ func main() {
 			continue
 		}
 		log(fmt.Sprintf("fetch ip success %s\n", ip))
-		ipFile := homeDir + "/.current-ip"
+		ipFile := homeDir + string(os.PathSeparator) + ".current-ip"
 		_, err = os.Stat(ipFile)
 		if os.IsNotExist(err) {
 			f, err := os.Create(ipFile)
