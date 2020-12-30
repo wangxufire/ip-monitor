@@ -14,17 +14,16 @@ import (
 )
 
 var (
-	ipFile      string
-	sleepPeriod uint
-	barkCode    string
+	ipFile string
+	period uint
+	bark   string
 )
 
 func init() {
-	bark := flag.String("bark", "2qT6qyWRNfAYYZx8sBsje7", "bark=${bark_device_code}")
-	period := flag.Uint("period", 600, "period=600 unit is second")
+	flag.StringVar(&bark, "bark", "2qT6qyWRNfAYYZx8sBsje7", "-bark ${bark_device_code}")
+	flag.UintVar(&period, "period", 600, "-period 600 unit is second")
 	flag.Parse()
-	sleepPeriod = *period
-	barkCode = *bark
+
 	current, err := user.Current()
 	if err != nil {
 		panic(err)
@@ -64,7 +63,7 @@ func main() {
 }
 
 func sleep() {
-	time.Sleep(time.Duration(sleepPeriod) * time.Second)
+	time.Sleep(time.Duration(period) * time.Second)
 }
 
 func log(msg interface{}) {
@@ -106,7 +105,7 @@ func compareAndRecordNewIP(ipFile, ip string) error {
 }
 
 func notify(ip string) error {
-	url := fmt.Sprintf("https://api.day.app/%s/ip-change/%s?isArchive=1&sound=birdsong", barkCode, ip)
+	url := fmt.Sprintf("https://api.day.app/%s/ip-change/%s?isArchive=1&sound=birdsong", bark, ip)
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return err
