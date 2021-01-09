@@ -39,18 +39,15 @@ func main() {
 			sleep()
 			continue
 		}
-		log(fmt.Sprintf("fetch ip success %s\n", ip))
+		log(fmt.Sprintf("fetch ip success %s", ip))
 		_, err = os.Stat(ipFile)
-		if os.IsNotExist(err) {
-			err = createIPFile(ipFile, ip)
+		if err != nil {
+			if os.IsNotExist(err) {
+				err = createIPFile(ipFile, ip)
+			}
 			if err != nil {
 				log(err)
 			}
-			sleep()
-			continue
-		}
-		if err != nil {
-			log(err)
 			sleep()
 			continue
 		}
@@ -68,7 +65,7 @@ func sleep() {
 
 func log(msg interface{}) {
 	date := time.Now().Format("2006-01-02 15:04:05")
-	fmt.Printf("%s %+v", date, msg)
+	fmt.Printf("%s %+v\n", date, msg)
 }
 
 func createIPFile(ipFile, ip string) error {
@@ -97,9 +94,18 @@ func compareAndRecordNewIP(ipFile, ip string) error {
 		if err = notify(ip); err != nil {
 			return err
 		}
-		f.Truncate(int64(len(buf)))
-		f.WriteString(ip)
-		f.Sync()
+		if err = f.Truncate(0); err != nil {
+			return err
+		}
+		if _, err = f.Seek(0, 0); err != nil {
+			return err
+		}
+		if _, err = f.WriteString(ip); err != nil {
+			return err
+		}
+		if err = f.Sync(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
