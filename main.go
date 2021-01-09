@@ -94,10 +94,7 @@ func compareAndRecordNewIP(ipFile, ip string) error {
 		if err = notify(ip); err != nil {
 			return err
 		}
-		if err = f.Truncate(0); err != nil {
-			return err
-		}
-		if _, err = f.Seek(0, 0); err != nil {
+		if err = os.Truncate(f.Name(), 0); err != nil {
 			return err
 		}
 		if _, err = f.WriteString(ip); err != nil {
