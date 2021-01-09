@@ -80,7 +80,7 @@ func createIPFile(ipFile, ip string) error {
 }
 
 func compareAndRecordNewIP(ipFile, ip string) error {
-	f, err := os.OpenFile(ipFile, os.O_APPEND, os.ModePerm)
+	f, err := os.OpenFile(ipFile, os.O_RDWR, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,10 @@ func compareAndRecordNewIP(ipFile, ip string) error {
 		if err = notify(ip); err != nil {
 			return err
 		}
-		if err = os.Truncate(f.Name(), 0); err != nil {
+		if err = f.Truncate(0); err != nil {
+			return err
+		}
+		if _, err = f.Seek(0, 0); err != nil {
 			return err
 		}
 		if _, err = f.WriteString(ip); err != nil {
