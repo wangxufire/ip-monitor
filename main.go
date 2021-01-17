@@ -35,9 +35,9 @@ var (
 func init() {
 	flag.StringVar(&bark, "bark", "", "-bark ${bark_device_code} see https://github.com/Finb/Bark")
 	flag.UintVar(&period, "period", 600, "-period 600 unit is second")
-	flag.StringVar(&domain, "domain", "wangxufire.top", "-domain domain")
-	flag.StringVar(&secretID, "secretId", "AKIDRefcQ2Xhc7UdVOnYopk8JF6jBTRw3YVJ", "-secretId tencent cloud api SecretId")
-	flag.StringVar(&secretKey, "secretKey", "i2A6FMCokY6Ps89tYw2gDnARYdU5PUlo", "-secretKey tencent cloud api secretKey")
+	flag.StringVar(&domain, "domain", "", "-domain domain")
+	flag.StringVar(&secretID, "secretId", "", "-secretId tencent cloud api SecretId")
+	flag.StringVar(&secretKey, "secretKey", "", "-secretKey tencent cloud api secretKey")
 	flag.Parse()
 
 	current, err := user.Current()
