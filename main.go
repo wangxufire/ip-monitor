@@ -176,7 +176,7 @@ func getExternalIP() (string, error) {
 	return strings.TrimSpace(res), nil
 }
 
-func sign(method string, api string, params map[string]string, signType string) (dataPost string, err error) {
+func sign(method, signType string, params map[string]string) (string, error) {
 	timestamp := time.Now().Unix()
 	// 添加公共部分
 	params["Timestamp"] = strconv.FormatInt(timestamp, 10)
@@ -191,12 +191,12 @@ func sign(method string, api string, params map[string]string, signType string) 
 	// 对参数的下标进行升序排序
 	sort.Strings(keys)
 
-	var dataParams string
+	var requestParams string
 	for _, k := range keys {
-		dataParams += k + "=" + params[k] + "&"
+		requestParams += k + "=" + params[k] + "&"
 	}
 
-	dataParams = dataParams[0 : len(dataParams)-1]
+	requestParams = requestParams[0 : len(requestParams)-1]
 
 	var mac hash.Hash
 	switch signType {
@@ -208,12 +208,11 @@ func sign(method string, api string, params map[string]string, signType string) 
 		return "", errors.New("加密参数错误")
 	}
 
-	mac.Write([]byte(strings.ToUpper(method) + api + ".api.qcloud.com/v2/index.php?" + dataParams))
+	mac.Write([]byte(strings.ToUpper(method) + "cns.api.qcloud.com/v2/index.php?" + requestParams))
 	sign := base64.StdEncoding.EncodeToString(mac.Sum(nil))
-
 	sign = url.QueryEscape(sign)
 
-	return dataParams + "&Signature" + "=" + sign, nil
+	return requestParams + "&Signature=" + sign, nil
 }
 
 func requestTencentCloud(URL string) (map[string]interface{}, error) {
@@ -221,17 +220,19 @@ func requestTencentCloud(URL string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer res.Body.Close()
+
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	var responseJSONMap map[string]interface{}
-	if err := json.Unmarshal(body, &responseJSONMap); err != nil {
+	var response map[string]interface{}
+	if err := json.Unmarshal(body, &response); err != nil {
 		log(body)
 		return nil, err
 	}
-	return responseJSONMap, nil
+	return response, nil
 }
 
 func cnsRecordList(subDomain string) (map[string]interface{}, error) {
@@ -241,7 +242,7 @@ func cnsRecordList(subDomain string) (map[string]interface{}, error) {
 		"domain":    domain,
 		"subDomain": subDomain,
 	}
-	paramsStr, err := sign("get", "cns", params, "HmacSHA1")
+	paramsStr, err := sign("get", "HmacSHA1", params)
 	if err != nil {
 		return nil, err
 	}
@@ -260,11 +261,11 @@ func cnsRecordModify(recordID, subDomain, value string) error {
 		"value":      value,
 		"ttl":        "600",
 	}
-	paramsStr, err := sign("get", "cns", params, "HmacSHA1")
+	paramsStr, err := sign("get", "HmacSHA1", params)
 	if err != nil {
 		return err
 	}
-	res, err = requestTencentCloud(apiURL + paramsStr)
+	res, err := requestTencentCloud(apiURL + paramsStr)
 	if err != nil {
 		return err
 	}
@@ -305,6 +306,7 @@ func updateSub(subDomain, ip string) error {
 				return err
 			}
 			log("update dns success")
+			break
 		}
 	}
 	return nil
