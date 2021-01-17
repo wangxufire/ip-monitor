@@ -41,6 +41,7 @@ func init() {
 	flag.Parse()
 
 	if bark == "" || domain == "" {
+		flag.Usage()
 		os.Exit(0)
 	}
 
