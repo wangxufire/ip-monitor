@@ -2,11 +2,11 @@
 
 ### Install
 ```
-go install github.com/wangxufire/ip-monitor@latest
+go get github.com/wangxufire/ip-monitor@latest
 ```
 or 
 ```
-go get github.com/wangxufire/ip-monitor@latest
+go install github.com/wangxufire/ip-monitor@latest
 ```
 or 
 ```
