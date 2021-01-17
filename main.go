@@ -264,10 +264,11 @@ func cnsRecordModify(recordID, subDomain, value string) error {
 	if err != nil {
 		return err
 	}
-	_, err = requestTencentCloud(apiURL + paramsStr)
+	res, err = requestTencentCloud(apiURL + paramsStr)
 	if err != nil {
 		return err
 	}
+	log(fmt.Sprintf("update sub-domain %s: %s", subDomain, res["codeDesc"].(string)))
 	return nil
 }
 
