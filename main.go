@@ -1,27 +1,43 @@
 package main
 
 import (
+	"crypto/hmac"
+	"crypto/sha1"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"hash"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"os/user"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
 
 var (
-	ipFile string
-	period uint
-	bark   string
+	ipFile    string
+	period    uint
+	bark      string
+	domain    string
+	secretID  string
+	secretKey string
 )
 
 func init() {
-	flag.StringVar(&bark, "bark", "2qT6qyWRNfAYYZx8sBsje7", "-bark ${bark_device_code}")
+	flag.StringVar(&bark, "bark", "", "-bark ${bark_device_code} see https://github.com/Finb/Bark")
 	flag.UintVar(&period, "period", 600, "-period 600 unit is second")
+	flag.StringVar(&domain, "domain", "wangxufire.top", "-domain domain")
+	flag.StringVar(&secretID, "secretId", "AKIDRefcQ2Xhc7UdVOnYopk8JF6jBTRw3YVJ", "-secretId tencent cloud api SecretId")
+	flag.StringVar(&secretKey, "secretKey", "i2A6FMCokY6Ps89tYw2gDnARYdU5PUlo", "-secretKey tencent cloud api secretKey")
 	flag.Parse()
 
 	current, err := user.Current()
@@ -91,6 +107,9 @@ func compareAndRecordNewIP(ipFile, ip string) error {
 	}
 	oldIP := string(buf)
 	if strings.Compare(ip, oldIP) != 0 {
+		if err = updateDNS(ip); err != nil {
+			return err
+		}
 		if err = notify(ip); err != nil {
 			return err
 		}
@@ -111,6 +130,9 @@ func compareAndRecordNewIP(ipFile, ip string) error {
 }
 
 func notify(ip string) error {
+	if bark == "" {
+		return nil
+	}
 	url := fmt.Sprintf("https://api.day.app/%s/ip-change/%s?isArchive=1&sound=birdsong", bark, ip)
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -147,4 +169,134 @@ func getExternalIP() (string, error) {
 		res += string(tmp[:n])
 	}
 	return strings.TrimSpace(res), nil
+}
+
+func sign(method string, api string, params map[string]string, signType string) (dataPost string, err error) {
+	timestamp := time.Now().Unix()
+	// 添加公共部分
+	params["Timestamp"] = strconv.FormatInt(timestamp, 10)
+	rand.Seed(timestamp)
+	params["Nonce"] = fmt.Sprintf("%v", rand.Int())
+	params["SecretId"] = secretID
+
+	var keys []string
+	for k := range params {
+		keys = append(keys, k)
+	}
+	// 对参数的下标进行升序排序
+	sort.Strings(keys)
+
+	var dataParams string
+	for _, k := range keys {
+		dataParams += k + "=" + params[k] + "&"
+	}
+
+	dataParams = dataParams[0 : len(dataParams)-1]
+
+	var mac hash.Hash
+	switch signType {
+	case "HmacSHA1":
+		mac = hmac.New(sha1.New, []byte(secretKey))
+	case "HmacSHA256":
+		mac = hmac.New(sha256.New, []byte(secretKey))
+	default:
+		return "", errors.New("加密参数错误")
+	}
+
+	mac.Write([]byte(strings.ToUpper(method) + api + ".api.qcloud.com/v2/index.php?" + dataParams))
+	sign := base64.StdEncoding.EncodeToString(mac.Sum(nil))
+
+	sign = url.QueryEscape(sign)
+
+	return dataParams + "&Signature" + "=" + sign, nil
+}
+
+func requestTencentCloud(URL string) (map[string]interface{}, error) {
+	res, err := http.Get(URL)
+	if err != nil {
+		return nil, err
+	}
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var responseJSONMap map[string]interface{}
+	if err := json.Unmarshal(body, &responseJSONMap); err != nil {
+		log(body)
+		return nil, err
+	}
+	return responseJSONMap, nil
+}
+
+func cnsRecordList(subDomain string) (map[string]interface{}, error) {
+	apiURL := "https://cns.api.qcloud.com/v2/index.php?"
+	params := map[string]string{
+		"Action":    "RecordList",
+		"domain":    domain,
+		"subDomain": subDomain,
+	}
+	paramsStr, err := sign("get", "cns", params, "HmacSHA1")
+	if err != nil {
+		return nil, err
+	}
+	return requestTencentCloud(apiURL + paramsStr)
+}
+
+func cnsRecordModify(recordID, subDomain, value string) error {
+	apiURL := "https://cns.api.qcloud.com/v2/index.php?"
+	params := map[string]string{
+		"Action":     "RecordModify",
+		"domain":     domain,
+		"recordId":   recordID,
+		"subDomain":  subDomain,
+		"recordType": "A",
+		"recordLine": "默认",
+		"value":      value,
+		"ttl":        "600",
+	}
+	paramsStr, err := sign("get", "cns", params, "HmacSHA1")
+	if err != nil {
+		return err
+	}
+	_, err = requestTencentCloud(apiURL + paramsStr)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func updateDNS(ip string) error {
+	err := updateSub("@", ip)
+	if err != nil {
+		return err
+	}
+	err = updateSub("www", ip)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func updateSub(subDomain, ip string) error {
+	resp, err := cnsRecordList(subDomain)
+	if err != nil {
+		return err
+	}
+	if resp["code"].(float64) != 0 {
+		return errors.New("get dns record list failed")
+	}
+	for _, v := range resp["data"].(map[string]interface{})["records"].([]interface{}) {
+		record := v.(map[string]interface{})
+		if record["type"].(string) == "A" {
+			id := record["id"].(float64)
+			recordID := strconv.FormatFloat(id, 'f', -1, 64)
+			err := cnsRecordModify(recordID, subDomain, ip)
+			if err != nil {
+				return err
+			}
+			log("update dns success")
+		}
+	}
+	return nil
 }
