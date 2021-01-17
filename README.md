@@ -18,3 +18,8 @@ GO111MODULE=off go install github.com/wangxufire/ip-monitor
 ```shell
 ip-monitor -bark ${bark_device_code} -period 600
 ```
+
+### modify tencent cloud DNSPod record
+```shell
+ip-monitor -bark ${bark_device_code} -period 600 -domain xxx.com -secretId xxx -secretKey xxx
+```
