@@ -40,6 +40,10 @@ func init() {
 	flag.StringVar(&secretKey, "secretKey", "", "-secretKey tencent cloud api secretKey")
 	flag.Parse()
 
+	if bark == "" || domain == "" {
+		os.Exit(0)
+	}
+
 	current, err := user.Current()
 	if err != nil {
 		panic(err)
@@ -267,6 +271,9 @@ func cnsRecordModify(recordID, subDomain, value string) error {
 }
 
 func updateDNS(ip string) error {
+	if domain == "" {
+		return nil
+	}
 	err := updateSub("@", ip)
 	if err != nil {
 		return err
