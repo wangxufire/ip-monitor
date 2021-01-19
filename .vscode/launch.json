@@ -11,33 +11,17 @@
       "mode": "debug",
       "program": "${workspaceFolder}/main.go",
       "args": [
-        "bark",
+        "-bark",
         "2qT6qyWsNAfnYZx8mBsje5",
-        "period",
+        "-period",
         "5",
-        "domain",
+        "-domain",
         "wangxufire.top",
-        "secretId",
+        "-secretId",
         "xxx",
-        "secretKey",
+        "-secretKey",
         "xxx"
       ]
-    },
-    {
-      "name": "Launch test function",
-      "type": "go",
-      "request": "launch",
-      "mode": "test",
-      "program": "${workspaceFolder}/main_test.go",
-      "args": [
-        "-test.run",
-        "Test_cnsRecordList"
-      ],
-      "env": {
-        "SecretId": "AKIDK89tQiasrd9MMLISkFXz70e3GDxRmSov",
-        "SecretKey": "1oHgxzKNDoAON6Yji27ziDSRWKHyUnxz",
-        "domain": "wangxufire.top"
-      }
     }
   ]
 }
