@@ -28,12 +28,5 @@ jobs:
             dep ensure
         fi
 
-    - name: Test
-      env:
-          domain: ${{ secrets.DOMAIN }}  
-          secretid: ${{ secrets.SECRETID }}
-          secretkey: ${{ secrets.SECRETKEY }}
-      run: go test -v ./...
-
     - name: Build
       run: go build -v ./...
