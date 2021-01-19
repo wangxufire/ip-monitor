@@ -14,8 +14,30 @@
         "bark",
         "2qT6qyWsNAfnYZx8mBsje5",
         "period",
-        "5"
+        "5",
+        "domain",
+        "wangxufire.top",
+        "secretId",
+        "xxx",
+        "secretKey",
+        "xxx"
       ]
+    },
+    {
+      "name": "Launch test function",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}/main_test.go",
+      "args": [
+        "-test.run",
+        "Test_cnsRecordList"
+      ],
+      "env": {
+        "SecretId": "AKIDK89tQiasrd9MMLISkFXz70e3GDxRmSov",
+        "SecretKey": "1oHgxzKNDoAON6Yji27ziDSRWKHyUnxz",
+        "domain": "wangxufire.top"
+      }
     }
   ]
 }
