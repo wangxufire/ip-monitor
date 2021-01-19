@@ -64,7 +64,10 @@ func main() {
 		_, err = os.Stat(ipFile)
 		if err != nil {
 			if os.IsNotExist(err) {
-				err = createIPFile(ipFile, ip)
+				if err = createIPFile(ipFile, ip); err != nil {
+					log(err)
+				}
+				err = updateDNS(ip)
 			}
 			if err != nil {
 				log(err)
@@ -72,8 +75,7 @@ func main() {
 			sleep()
 			continue
 		}
-		err = compareAndRecordNewIP(ipFile, ip)
-		if err != nil {
+		if err = compareAndRecordNewIP(ipFile, ip); err != nil {
 			log(err)
 		}
 		sleep()
