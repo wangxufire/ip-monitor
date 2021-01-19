@@ -33,6 +33,14 @@ var (
 )
 
 func init() {
+	current, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
+	ipFile = current.HomeDir + string(os.PathSeparator) + ".current-ip"
+}
+
+func main() {
 	flag.StringVar(&bark, "bark", "", "-bark ${bark_device_code} see https://github.com/Finb/Bark")
 	flag.UintVar(&period, "period", 600, "-period 600 unit is second")
 	flag.StringVar(&domain, "domain", "", "-domain domain")
@@ -45,14 +53,6 @@ func init() {
 		os.Exit(0)
 	}
 
-	current, err := user.Current()
-	if err != nil {
-		panic(err)
-	}
-	ipFile = current.HomeDir + string(os.PathSeparator) + ".current-ip"
-}
-
-func main() {
 	for {
 		ip, err := getExternalIP()
 		if err != nil {
